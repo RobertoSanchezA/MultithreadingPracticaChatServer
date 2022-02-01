@@ -3,12 +3,14 @@ package com.company;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.lang.reflect.Array;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 
-public class Main {
 
+public class Main {
+    public static ArrayList usernames = new ArrayList();
     public static void main(String[] args) throws IOException {
         Socket socket = null;
         ServerSocket serverSocket = new ServerSocket(8081);
@@ -35,11 +37,22 @@ public class Main {
                 ois = new ObjectInputStream(s.getInputStream());
                 oos = new ObjectOutputStream(s.getOutputStream());
 
+                //guardo el nombre de usuario y lo agrego a la lista
                 String nombreUsuario = (String)ois.readObject();
-                String saludo = "Hola manin " + nombreUsuario;
+                usernames.add(nombreUsuario);
 
+                //envio saludo
+                String saludo = "Hola manin " + nombreUsuario;
                 oos.writeObject(saludo);
-                System.out.println("Saludo enviado a " + s.getInetAddress());
+
+                //confirmo en el servidor que se ha enviado el saludo
+                System.out.println("Saludo enviado a " + nombreUsuario + " desde " + s.getInetAddress());
+
+                for (Object username : usernames) {
+                    System.out.println("Usuarios registrados:");
+                    System.out.println(username);
+                }
+
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
             } finally {
