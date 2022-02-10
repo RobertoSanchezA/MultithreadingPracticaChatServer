@@ -1,5 +1,7 @@
 package com.company;
 
+import com.company.monitor.Monitor;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -7,10 +9,13 @@ import java.lang.reflect.Array;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Scanner;
 
 
 public class Main {
-    public static ArrayList usernames = new ArrayList();
+    public static Scanner scan = new Scanner(System.in);
+    static Monitor messages = new Monitor();
+
     public static void main(String[] args) throws IOException {
         Socket socket = null;
         ServerSocket serverSocket = new ServerSocket(8081);
@@ -22,37 +27,68 @@ public class Main {
             client.start();
         }
     }
+
+    public Main(Monitor messages) {
+        Main.messages = messages;
+    }
+
     static class Client extends Thread {
         private Socket s = null;
         private ObjectInputStream ois = null;
         private ObjectOutputStream oos = null;
-
         public Client(Socket socket) {
             this.s = socket;
         }
 
-        public void run() {
+        public boolean msgReceived(String msg){
+            String message = msg.substring(0, 8);
+            return message.equals("message:");
+        }
+        public boolean clientDisconnected(String msg){
+            if (msg.equals("bye")) return true;
+            else return false;
+        }
+
+        public synchronized void run() {
             System.out.println("Conexion recibida desde " + s.getInetAddress());
+
             try {
                 ois = new ObjectInputStream(s.getInputStream());
                 oos = new ObjectOutputStream(s.getOutputStream());
 
-                //guardo el nombre de usuario y lo agrego a la lista
-                String nombreUsuario = (String)ois.readObject();
-                usernames.add(nombreUsuario);
+                String username = "";
+                boolean validMsg = true;
+                boolean justConnected = true;
 
-                //envio saludo
-                String saludo = "Hola manin " + nombreUsuario;
-                oos.writeObject(saludo);
+                while (validMsg) {
+                    //leo nombre de usuario
+                    if(justConnected){
+                        username = ois.readObject().toString();
+                        oos.writeObject(messages.get());
+                        justConnected = false;
+                    }
 
-                //confirmo en el servidor que se ha enviado el saludo
-                System.out.println("Saludo enviado a " + nombreUsuario + " desde " + s.getInetAddress());
+                    String newMsg = (String) ois.readObject();
+                    if(msgReceived(newMsg)) {
 
-                for (Object username : usernames) {
-                    System.out.println("Usuarios registrados:");
-                    System.out.println(username);
+                        //elimino la parte de 'message:' y guardo
+                        // el mensaje en el arrayList
+                        newMsg = newMsg.substring(8);
+                        messages.put(newMsg);
+                        //envio todos los mensajes al cliente
+                        oos.writeObject(messages.get());
+
+                    }else if(clientDisconnected(newMsg)){
+                        oos.writeObject("good bye");
+                        validMsg = false;
+                    } else {
+                        //si el cliente no escribe bye o message:
+                        //envio mensaje de error
+                        oos.writeObject("mensaje erróneo");
+                        System.out.println("error");
+                        validMsg = false;
+                    }
                 }
-
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
             } finally {
