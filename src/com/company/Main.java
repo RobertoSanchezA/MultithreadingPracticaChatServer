@@ -10,7 +10,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Scanner;
-
+import java.time.LocalDate;
 
 public class Main {
     public static Scanner scan = new Scanner(System.in);
@@ -39,6 +39,7 @@ public class Main {
         public Client(Socket socket) {
             this.s = socket;
         }
+        ArrayList mslList = new ArrayList();
 
         public boolean msgReceived(String msg){
             String message = msg.substring(0, 8);
@@ -62,6 +63,7 @@ public class Main {
 
                 while (validMsg) {
                     //leo nombre de usuario
+                    String formatedMsg = "";
                     if(justConnected){
                         username = ois.readObject().toString();
                         oos.writeObject(messages.get());
@@ -73,8 +75,9 @@ public class Main {
 
                         //elimino la parte de 'message:' y guardo
                         // el mensaje en el arrayList
-                        newMsg = newMsg.substring(8);
+                        newMsg = username +":" + newMsg.substring(8) + " " + LocalDate.now();
                         messages.put(newMsg);
+
                         //envio todos los mensajes al cliente
                         oos.writeObject(messages.get());
 

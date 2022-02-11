@@ -19,8 +19,11 @@ public class Monitor extends  Thread{
     public synchronized String get(){
         //devuelve los mensajes
         notifyAll();
-        return msgList.toString();
-
+        String msg = "";
+        for (int i = 0; i < msgList.size(); i++) {
+            msg += msgList.get(i) + "\n";
+        }
+        return msg;
     }
 
 }
