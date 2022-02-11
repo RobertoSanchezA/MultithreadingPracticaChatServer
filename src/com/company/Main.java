@@ -39,7 +39,7 @@ public class Main {
         public Client(Socket socket) {
             this.s = socket;
         }
-        ArrayList mslList = new ArrayList();
+
 
         public boolean msgReceived(String msg){
             String message = msg.substring(0, 8);
@@ -62,6 +62,7 @@ public class Main {
                 boolean justConnected = true;
 
                 while (validMsg) {
+
                     //leo nombre de usuario
                     String formatedMsg = "";
                     if(justConnected){
@@ -70,6 +71,7 @@ public class Main {
                         justConnected = false;
                     }
 
+                    //empiezo a leer los mensajes del cliente
                     String newMsg = (String) ois.readObject();
                     if(msgReceived(newMsg)) {
 
